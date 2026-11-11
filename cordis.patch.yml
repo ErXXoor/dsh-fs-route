@@ -1,0 +1,58 @@
+# dsh-fs-route bundle patch.
+#
+# Replaces the single-slot execution-world providers with workspace-routed ones.
+# Unlike the shipped SSH providers, local workspaces keep working: the routed
+# providers delegate every non-routed operation to the same local implementations
+# this row replaces.
+#
+# `sandbox` is deliberately NOT disabled: dsh-shell (and therefore
+# dsh-bash-sandbox) depends on dsh-sandbox + dsh-sandbox-policy, so removing it
+# leaves the whole bash chain pending with no `shell` service.
+
+- id: fs-sandbox
+  disabled: true
+- id: subprocess
+  disabled: true
+
+# The routed executor (lib/shell.js) EXTENDS the platform sandbox executor and
+# registers itself as `shell`, so both shipped shell providers must stay off
+# that single slot. Whichever registers first wins: a shipped provider left
+# enabled makes the routed mount fail with `service "shell" has been
+# registered`, and routed commands would then be wrapped by the HOST sandbox
+# and sent to the remote shell instead of `bash -c` running there.
+- id: pwsh-sandbox
+  disabled: true
+- id: bash-sandbox
+  disabled: true
+
+# The shipped auto directory picker mounts its native CLIENT into the same
+# `single` directory-flow holes this plugin's browser half fills. Two
+# registrations at one priority fail the second entry and abort web boot
+# ("web boot: 1 entry did not activate"), so the built-in picker stays off.
+# The routed picker still offers a Local tab, so local folders remain addable.
+- id: directory-picker
+  name: "@deepseek-ai/dsh-host-directory-picker-auto"
+  disabled: true
+
+# Deployment configuration lives in the PROFILE patch, never here: this file
+# ships with the package and must contain no host names, usernames or key paths.
+# Override it like this (see README "配置"):
+#
+#   - id: fs-route
+#     name: dsh-fs-route
+#     config:
+#       defaultHost: myhost
+#       hosts:
+#         myhost:
+#           host: 203.0.113.10
+#           username: someone
+#           privateKey: C:/Users/someone/.ssh/id_ed25519
+#           cwd: /home/someone/project
+#
+# With no hosts configured the picker offers only the Local tab, which is the
+# safe default for a fresh install.
+- insert:
+    - id: fs-route
+      name: dsh-fs-route
+      config:
+        hosts: {}
