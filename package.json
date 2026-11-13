@@ -1,6 +1,6 @@
 {
   "name": "dsh-fs-route",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Workspace-routed execution worlds for DeepSeek Harness: keep local workspaces local while ssh:// workspaces read, write, execute and open terminals on the SSH host.",
   "type": "module",
   "license": "MIT",
